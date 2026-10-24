@@ -7,6 +7,8 @@ When Astro detects it is running from an agent, it may start the development ser
 
 Astro also uses Vite's host checks. Replit's browser-tab host may be rejected even while the internal preview works; set `server.allowedHosts: true` in `astro.config.mjs` so the proxied browser-tab URL can load.
 
+This host-allowance fix was confirmed to resolve the browser-tab “Error opening” issue.
+
 **Why:** The workflow needs its foreground process to stay alive while it serves the configured artifact port.
 
 **How to apply:** For Astro artifacts, keep the injected `PORT` and `BASE_PATH` behavior intact, use `--ignore-lock` in the foreground workflow command, and allow the Replit proxy host.
