@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Vedanta Inquiry"
+description = "A static, content-first Vedanta inquiry website for reflective study, with editorial articles, responsive navigation, and a warm, readable design."
+version = "1.0.0"
+id = "artifacts/vedanta-inquiry"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19169
+
+[services.development]
+run = "pnpm --filter @workspace/vedanta-inquiry run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/vedanta-inquiry", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/vedanta-inquiry/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19169"
+BASE_PATH = "/"

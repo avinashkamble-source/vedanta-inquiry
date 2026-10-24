@@ -1,0 +1,1 @@
+- [Astro workflow behavior](astro-workflow.md) — Astro may auto-background its dev server in agent-run workflows; use the foreground behavior to keep preview port detection reliable.

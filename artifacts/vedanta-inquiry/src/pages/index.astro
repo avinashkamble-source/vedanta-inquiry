@@ -1,0 +1,81 @@
+---
+import { getCollection } from 'astro:content';
+import SiteLayout from '../layouts/SiteLayout.astro';
+
+const base = import.meta.env.BASE_URL;
+const essays = (await getCollection('essays')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const featured = essays.find((essay) => essay.data.featured) ?? essays[0];
+const readings = essays.filter((essay) => essay.id !== featured?.id);
+const formatDate = (date: Date) => new Intl.DateTimeFormat('en', { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
+---
+<SiteLayout>
+  <main id="main-content">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">A study space for self-inquiry</span>
+          <h1>Look closely.<br /><em>See for yourself.</em></h1>
+          <p class="hero-intro">Vedanta offers a way to ask an old, honest question: what am I, beneath everything I know about myself? Start with the teaching. Stay close to your own experience.</p>
+          <div class="hero-actions">
+            <a class="text-link" href={`${base}#readings`}>Explore the readings <span class="arrow" aria-hidden="true">→</span></a>
+            <span class="eyebrow">No special experience required</span>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <span class="sun-disc"></span><span class="horizon"></span><span class="art-center">I</span>
+          <span class="orbit-note">The known changes.<br />What knows it?</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="intro-band" id="approach" aria-label="Our approach">
+      <div class="shell intro-band-inner">
+        <span class="eyebrow">A grounded approach</span>
+        <p>Not a promise of answers from elsewhere. A careful place to <strong>listen, question, and examine what is true in experience.</strong></p>
+      </div>
+    </section>
+
+    {featured && <section class="section" aria-labelledby="featured-heading">
+      <div class="shell">
+        <div class="section-heading">
+          <div><span class="eyebrow">Start here · {featured.data.readTime}</span><h2 id="featured-heading">A first question</h2></div>
+          <p>Short reflections for a slower kind of reading. Take what is useful; test it against your own experience.</p>
+        </div>
+        <article class="feature-card">
+          <div class="feature-art" aria-hidden="true"><span class="feature-sun"></span><span class="feature-word">ātman</span></div>
+          <div class="feature-copy">
+            <div class="feature-meta"><span>{featured.data.topic}</span><span>{formatDate(featured.data.date)}</span></div>
+            <h3>{featured.data.title}</h3>
+            <p>{featured.data.description}</p>
+            <a class="text-link" href={`${base}essays/${featured.id}/`}>Read the reflection <span class="arrow" aria-hidden="true">→</span></a>
+          </div>
+        </article>
+      </div>
+    </section>}
+
+    <section class="reading-section" id="readings" aria-labelledby="reading-heading">
+      <div class="shell">
+        <div class="reading-header">
+          <div><span class="eyebrow">The reading room</span><h2 id="reading-heading">A few places to begin</h2></div>
+        </div>
+        <div class="reading-list">
+          {readings.map((essay, index) => (
+            <a class="reading-item" href={`${base}essays/${essay.id}/`}>
+              <span class="reading-number" aria-hidden="true">0{index + 2}</span>
+              <span class="reading-title">{essay.data.title}</span>
+              <span class="reading-desc">{essay.data.description}</span>
+              <span class="reading-arrow" aria-hidden="true">↗</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" id="begin">
+      <div class="shell closing-inner">
+        <div><span class="eyebrow">A simple place to start</span><h2>What do you know about yourself—directly?</h2></div>
+        <a class="closing-link" href={`${base}essays/what-is-the-self/`}>Begin with the first reading <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+  </main>
+</SiteLayout>
