@@ -1,11 +1,17 @@
 ---
 title: "What do we mean by “the self”?"
+slug: what-is-the-self
 description: "A first, careful distinction between the person we describe and the awareness in which that description appears."
-date: 2025-02-18
-readTime: "4 min read"
-topic: "A first inquiry"
-featured: true
+category: Foundations
+series: Beginning the inquiry
+tags: [self-inquiry, awareness, vedanta]
+publicationDate: 2025-02-18
+status: published
+readingTime: 4
+sample: true
 ---
+
+**Sample article**
 
 We use the word *I* all day long. I am tired. I am glad you called. I remember that place. It is a small word carrying a remarkably large bundle: a body, a history, a set of preferences, a voice that seems to comment on everything.
 

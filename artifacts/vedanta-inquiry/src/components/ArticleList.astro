@@ -1,0 +1,34 @@
+---
+import type { Article } from '../lib/articles';
+
+interface Props {
+  articles: Article[];
+}
+
+const { articles } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const formatDate = (date: Date) =>
+  new Intl.DateTimeFormat('en', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+---
+
+<ul class="article-list">
+  {articles.map((article) => (
+    <li>
+      <a class="article-list-item" href={`${base}essays/${article.data.slug}/`}>
+        <div class="article-list-meta">
+          <span>{article.data.category}</span>
+          <span>{formatDate(article.data.publicationDate)}</span>
+          <span>{article.data.readingTime} min read</span>
+          {article.data.sample && <span class="sample-badge">Sample article</span>}
+        </div>
+        <h2>{article.data.title}</h2>
+        <p>{article.data.description}</p>
+        <span class="article-list-arrow" aria-hidden="true">↗</span>
+      </a>
+    </li>
+  ))}
+</ul>

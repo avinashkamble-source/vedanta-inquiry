@@ -1,0 +1,48 @@
+---
+import ArticleList from '../../components/ArticleList.astro';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublishedArticles, slugifyTaxonomy } from '../../lib/articles';
+
+export async function getStaticPaths() {
+  const articles = await getPublishedArticles();
+  const series = [
+    ...new Set(
+      articles
+        .map((article) => article.data.series)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ];
+
+  return series.map((name) => ({
+    params: { slug: slugifyTaxonomy(name) },
+    props: {
+      name,
+      articles: articles
+        .filter((article) => article.data.series === name)
+        .slice()
+        .reverse(),
+    },
+  }));
+}
+
+const { name, articles } = Astro.props;
+---
+
+<SiteLayout
+  title={`${name} — Vedanta Inquiry`}
+  description={`Read the published articles in the ${name} series.`}
+>
+  <main id="main-content" class="archive-page">
+    <header class="archive-hero">
+      <div class="shell">
+        <a class="archive-back" href={`${import.meta.env.BASE_URL}#readings`}>← Reading room</a>
+        <span class="eyebrow">Series</span>
+        <h1>{name}</h1>
+        <p>A sequence of reflections to read at your own pace.</p>
+      </div>
+    </header>
+    <section class="shell archive-content" aria-label={`${name} articles`}>
+      <ArticleList articles={articles} />
+    </section>
+  </main>
+</SiteLayout>

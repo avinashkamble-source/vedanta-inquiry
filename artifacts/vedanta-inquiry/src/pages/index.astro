@@ -1,11 +1,13 @@
 ---
-import { getCollection } from 'astro:content';
+import { getPublishedArticles, slugifyTaxonomy } from '../lib/articles';
 import SiteLayout from '../layouts/SiteLayout.astro';
 
 const base = import.meta.env.BASE_URL;
-const essays = (await getCollection('essays')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const featured = essays.find((essay) => essay.data.featured) ?? essays[0];
-const readings = essays.filter((essay) => essay.id !== featured?.id);
+const articles = (await getPublishedArticles()).slice().reverse();
+const featured = articles[0];
+const readings = articles.slice(1);
+const categories = [...new Set(articles.map((article) => article.data.category))].sort();
+const series = [...new Set(articles.map((article) => article.data.series).filter((value): value is string => Boolean(value)))].sort();
 const formatDate = (date: Date) => new Intl.DateTimeFormat('en', { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
 ---
 <SiteLayout>
@@ -38,16 +40,17 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat('en', { month: 'long'
     {featured && <section class="section" aria-labelledby="featured-heading">
       <div class="shell">
         <div class="section-heading">
-          <div><span class="eyebrow">Start here · {featured.data.readTime}</span><h2 id="featured-heading">A first question</h2></div>
+          <div><span class="eyebrow">Start here · {featured.data.readingTime} min read</span><h2 id="featured-heading">A first question</h2></div>
           <p>Short reflections for a slower kind of reading. Take what is useful; test it against your own experience.</p>
         </div>
         <article class="feature-card">
           <div class="feature-art" aria-hidden="true"><span class="feature-sun"></span><span class="feature-word">ātman</span></div>
           <div class="feature-copy">
-            <div class="feature-meta"><span>{featured.data.topic}</span><span>{formatDate(featured.data.date)}</span></div>
+            <div class="feature-meta"><span>{featured.data.category}</span><span>{formatDate(featured.data.publicationDate)}</span></div>
+            {featured.data.sample && <span class="sample-badge">Sample article</span>}
             <h3>{featured.data.title}</h3>
             <p>{featured.data.description}</p>
-            <a class="text-link" href={`${base}essays/${featured.id}/`}>Read the reflection <span class="arrow" aria-hidden="true">→</span></a>
+            <a class="text-link" href={`${base}essays/${featured.data.slug}/`}>Read the reflection <span class="arrow" aria-hidden="true">→</span></a>
           </div>
         </article>
       </div>
@@ -60,13 +63,40 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat('en', { month: 'long'
         </div>
         <div class="reading-list">
           {readings.map((essay, index) => (
-            <a class="reading-item" href={`${base}essays/${essay.id}/`}>
+            <a class="reading-item" href={`${base}essays/${essay.data.slug}/`}>
               <span class="reading-number" aria-hidden="true">0{index + 2}</span>
-              <span class="reading-title">{essay.data.title}</span>
+              <span class="reading-title">{essay.data.title}<span class="reading-sample">Sample article</span></span>
               <span class="reading-desc">{essay.data.description}</span>
               <span class="reading-arrow" aria-hidden="true">↗</span>
             </a>
           ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="taxonomy-section" aria-labelledby="taxonomy-heading">
+      <div class="shell taxonomy-inner">
+        <div>
+          <span class="eyebrow">Explore by subject</span>
+          <h2 id="taxonomy-heading">Find a way in</h2>
+        </div>
+        <div class="taxonomy-groups">
+          <div class="taxonomy-group">
+            <h3>Categories</h3>
+            <div class="taxonomy-links">
+              {categories.map((category) => (
+                <a href={`${base}categories/${slugifyTaxonomy(category)}/`}>{category}<span aria-hidden="true">↗</span></a>
+              ))}
+            </div>
+          </div>
+          {series.length > 0 && <div class="taxonomy-group">
+            <h3>Series</h3>
+            <div class="taxonomy-links">
+              {series.map((name) => (
+                <a href={`${base}series/${slugifyTaxonomy(name)}/`}>{name}<span aria-hidden="true">↗</span></a>
+              ))}
+            </div>
+          </div>}
         </div>
       </div>
     </section>

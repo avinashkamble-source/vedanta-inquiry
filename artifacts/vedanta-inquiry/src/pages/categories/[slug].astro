@@ -1,0 +1,42 @@
+---
+import ArticleList from '../../components/ArticleList.astro';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublishedArticles, slugifyTaxonomy } from '../../lib/articles';
+
+export async function getStaticPaths() {
+  const articles = await getPublishedArticles();
+  const categories = [...new Set(articles.map((article) => article.data.category))];
+
+  return categories.map((category) => ({
+    params: { slug: slugifyTaxonomy(category) },
+    props: {
+      category,
+      articles: articles
+        .filter((article) => article.data.category === category)
+        .slice()
+        .reverse(),
+    },
+  }));
+}
+
+const { category, articles } = Astro.props;
+---
+
+<SiteLayout
+  title={`${category} — Vedanta Inquiry`}
+  description={`Published Vedanta Inquiry articles in the ${category} category.`}
+>
+  <main id="main-content" class="archive-page">
+    <header class="archive-hero">
+      <div class="shell">
+        <a class="archive-back" href={`${import.meta.env.BASE_URL}#readings`}>← Reading room</a>
+        <span class="eyebrow">Category</span>
+        <h1>{category}</h1>
+        <p>Published reflections gathered around this subject.</p>
+      </div>
+    </header>
+    <section class="shell archive-content" aria-label={`${category} articles`}>
+      <ArticleList articles={articles} />
+    </section>
+  </main>
+</SiteLayout>

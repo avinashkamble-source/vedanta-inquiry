@@ -1,30 +1,70 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublishedArticles, slugifyTaxonomy } from '../../lib/articles';
 
 export async function getStaticPaths() {
-  const essays = await getCollection('essays');
-  return essays.map((essay) => ({ params: { slug: essay.id }, props: { essay } }));
+  const articles = await getPublishedArticles();
+  return articles.map((article, index) => ({
+    params: { slug: article.data.slug },
+    props: {
+      article,
+      previous: articles[index - 1] ?? null,
+      next: articles[index + 1] ?? null,
+    },
+  }));
 }
 
-const { essay } = Astro.props;
-const { Content } = await render(essay);
+const { article, previous, next } = Astro.props;
+const { Content } = await render(article);
 const base = import.meta.env.BASE_URL;
-const date = new Intl.DateTimeFormat('en', { month: 'long', day: 'numeric', year: 'numeric' }).format(essay.data.date);
+const date = new Intl.DateTimeFormat('en', { month: 'long', day: 'numeric', year: 'numeric' }).format(article.data.publicationDate);
 ---
-<SiteLayout title={`${essay.data.title} — Vedanta Inquiry`} description={essay.data.description}>
+<SiteLayout title={`${article.data.title} — Vedanta Inquiry`} description={article.data.description}>
   <main id="main-content">
     <header class="article-hero">
       <div class="article-wrap">
-        <span class="eyebrow">{essay.data.topic} &nbsp;·&nbsp; {essay.data.readTime}</span>
-        <h1>{essay.data.title}</h1>
-        <p class="article-deck">{essay.data.description}</p>
+        <div class="article-kicker">
+          <a href={`${base}categories/${slugifyTaxonomy(article.data.category)}/`}>{article.data.category}</a>
+          <span aria-hidden="true">·</span>
+          <span>{article.data.readingTime} min read</span>
+          {article.data.sample && <span class="sample-badge">Sample article</span>}
+        </div>
+        <h1>{article.data.title}</h1>
+        <p class="article-deck">{article.data.description}</p>
         <p class="eyebrow" style="margin-top:24px; letter-spacing:.08em; text-transform:none; font-weight:500">{date}</p>
+        {article.data.series && <p class="article-series">
+          Part of <a href={`${base}series/${slugifyTaxonomy(article.data.series)}/`}>{article.data.series}</a>
+        </p>}
       </div>
     </header>
     <article class="article-wrap article-content">
+      {article.data.tags.length > 0 && <ul class="article-tags" aria-label="Article tags">
+        {article.data.tags.map((tag) => <li>{tag}</li>)}
+      </ul>}
       <div class="prose"><Content /></div>
+      {article.data.sourceReferences && article.data.sourceReferences.length > 0 && <section class="source-references" aria-labelledby="sources-heading">
+        <h2 id="sources-heading">Source references</h2>
+        <ul>
+          {article.data.sourceReferences.map((source) => (
+            <li>
+              {source.url
+                ? <a href={source.url} rel="noreferrer">{source.label}</a>
+                : <span>{source.label}</span>}
+              <span>{source.reference}</span>
+            </li>
+          ))}
+        </ul>
+      </section>}
       <a class="article-back" href={`${base}#readings`}><span aria-hidden="true">←</span> Back to the reading room</a>
+      <nav class="article-pagination" aria-label="Article navigation">
+        {previous
+          ? <a href={`${base}essays/${previous.data.slug}/`}><span>Previous article</span><strong>{previous.data.title}</strong></a>
+          : <span class="pagination-empty" />}
+        {next
+          ? <a class="pagination-next" href={`${base}essays/${next.data.slug}/`}><span>Next article</span><strong>{next.data.title}</strong></a>
+          : <span class="pagination-empty" />}
+      </nav>
     </article>
   </main>
 </SiteLayout>

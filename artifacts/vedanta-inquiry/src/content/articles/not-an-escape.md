@@ -1,11 +1,17 @@
 ---
 title: "Not an escape from ordinary life"
+slug: not-an-escape
 description: "Self-inquiry is not a way to rise above the human day. It is a way to meet it with less confusion."
-date: 2025-02-11
-readTime: "3 min read"
-topic: "In daily life"
-featured: false
+category: Daily life
+series: Beginning the inquiry
+tags: [daily-life, practice, clarity]
+publicationDate: 2025-02-11
+status: published
+readingTime: 3
+sample: true
 ---
+
+**Sample article**
 
 Spiritual language can make ordinary life sound like a problem to leave behind. The errands, difficult conversations, and familiar disappointments are treated as distractions from something more real.
 

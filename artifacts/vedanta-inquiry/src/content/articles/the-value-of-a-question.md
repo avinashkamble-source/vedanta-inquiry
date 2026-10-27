@@ -1,11 +1,17 @@
 ---
 title: "The value of a question"
+slug: the-value-of-a-question
 description: "A good question does not rush to make uncertainty disappear. It teaches us how to look."
-date: 2025-02-04
-readTime: "5 min read"
-topic: "How to study"
-featured: false
+category: Study
+series: Beginning the inquiry
+tags: [study, questions, reflection]
+publicationDate: 2025-02-04
+status: published
+readingTime: 5
+sample: true
 ---
+
+**Sample article**
 
 Some questions are practical. Where did I leave my keys? What time does the train arrive? They ask for information, and a correct answer lets us move on.
 
