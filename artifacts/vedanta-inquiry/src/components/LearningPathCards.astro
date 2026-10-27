@@ -1,0 +1,86 @@
+---
+interface LearningPath {
+  slug: string;
+  title: string;
+  description: string;
+  articleCount: number;
+}
+
+interface Props {
+  basePath: string;
+  paths: LearningPath[];
+}
+
+const { basePath, paths } = Astro.props;
+const base = basePath.endsWith('/') ? basePath : `${basePath}/`;
+---
+
+<nav class="learning-paths" aria-label="Learning paths">
+  <ul class="path-list">
+    {paths.map((path, index) => (
+      <li class="path-item">
+        <a class="path-card" href={`${base}learning-paths/${path.slug}/`}>
+          <span class="path-context">A guided inquiry <span aria-hidden="true">/</span> {String(index + 1).padStart(2, '0')}</span>
+          <span class="path-title">{path.title}</span>
+          <span class="path-description">{path.description}</span>
+          <span class="path-footer">
+            <span>{path.articleCount} {path.articleCount === 1 ? 'article' : 'articles'}</span>
+            <span class="path-arrow" aria-hidden="true">↗</span>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .learning-paths {
+    --path-ink: var(--ink, #292a26);
+    --path-muted: var(--muted, #6e7068);
+    --path-line: var(--line, #dcd5c8);
+    --path-paper: var(--paper, #f6f2e9);
+    --path-deep: var(--paper-deep, #eee8dc);
+    --path-olive: var(--olive, #69715b);
+    --path-rust: var(--rust, #a5573d);
+    width: 100%;
+  }
+
+  .path-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .path-item { min-width: 0; }
+
+  .path-card {
+    position: relative;
+    display: flex;
+    min-height: 222px;
+    height: 100%;
+    flex-direction: column;
+    padding: clamp(22px, 3vw, 32px);
+    border: 1px solid var(--path-line);
+    background: var(--path-deep);
+    color: var(--path-ink);
+    text-decoration: none;
+    transition: background .2s ease, border-color .2s ease;
+  }
+
+  .path-card:hover { border-color: #b9bbaa; background: #e9e9df; }
+  .path-context { color: var(--path-olive); font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .path-context span { margin-inline: 5px; color: #a7a89b; }
+  .path-title { margin-top: 16px; font-family: var(--serif, Georgia, serif); font-size: clamp(1.6rem, 3vw, 2.25rem); font-weight: 400; letter-spacing: -.04em; line-height: 1.14; }
+  .path-description { max-width: 560px; margin-top: 10px; color: var(--path-muted); font-size: .85rem; line-height: 1.65; }
+  .path-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: auto; padding-top: 22px; color: var(--path-olive); font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .path-arrow { color: var(--path-rust); font-size: 1.15rem; transition: transform .2s ease; }
+  .path-card:hover .path-arrow { transform: translate(4px, -2px); }
+
+  @media (max-width: 680px) {
+    .path-list { grid-template-columns: 1fr; gap: 12px; }
+    .path-card { min-height: 200px; padding: 23px; }
+  }
+</style>

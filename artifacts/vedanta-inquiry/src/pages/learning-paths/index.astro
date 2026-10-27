@@ -1,0 +1,38 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublishedArticles } from '../../lib/articles';
+import { resolveLearningPaths } from '../../lib/learning-paths';
+
+const base = import.meta.env.BASE_URL;
+const paths = resolveLearningPaths(await getPublishedArticles());
+---
+
+<SiteLayout
+  title="Learning paths — Vedanta Inquiry"
+  description="Guided sequences of Vedanta Inquiry readings for a thoughtful start."
+>
+  <main id="main-content" class="archive-page">
+    <header class="archive-hero">
+      <div class="shell">
+        <a class="archive-back" href={`${base}#readings`}>← Reading room</a>
+        <span class="eyebrow">Guided reading</span>
+        <h1>Learning paths</h1>
+        <p>Follow a sequence of reflections at your own pace. Each path is a suggested order, not a course to complete.</p>
+      </div>
+    </header>
+    <section class="shell learning-path-index" aria-label="Available learning paths">
+      <ul>
+        {paths.map((path) => (
+          <li>
+            <a href={`${base}learning-paths/${path.slug}/`}>
+              <span class="eyebrow">{path.articles.length} readings</span>
+              <h2>{path.title}</h2>
+              <p>{path.description}</p>
+              <span class="learning-path-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </main>
+</SiteLayout>

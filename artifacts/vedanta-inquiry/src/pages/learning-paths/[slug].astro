@@ -1,0 +1,45 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { getPublishedArticles } from '../../lib/articles';
+import { resolveLearningPaths } from '../../lib/learning-paths';
+
+export async function getStaticPaths() {
+  return resolveLearningPaths(await getPublishedArticles()).map((path) => ({
+    params: { slug: path.slug },
+    props: { path },
+  }));
+}
+
+const { path } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+
+<SiteLayout
+  title={`${path.title} — Vedanta Inquiry`}
+  description={path.description}
+>
+  <main id="main-content" class="archive-page">
+    <header class="archive-hero">
+      <div class="shell">
+        <a class="archive-back" href={`${base}learning-paths/`}>← All learning paths</a>
+        <span class="eyebrow">A guided sequence · {path.articles.length} readings</span>
+        <h1>{path.title}</h1>
+        <p>{path.description}</p>
+      </div>
+    </header>
+    <section class="shell learning-path-steps" aria-label={`${path.title} steps`}>
+      <ol>
+        {path.articles.map((article, index) => (
+          <li>
+            <span class="learning-step-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <a href={`${base}essays/${article.data.slug}/`}>
+              <span class="eyebrow">Step {index + 1} · {article.data.readingTime} min read</span>
+              <h2>{article.data.title}</h2>
+              <p>{article.data.description}</p>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  </main>
+</SiteLayout>

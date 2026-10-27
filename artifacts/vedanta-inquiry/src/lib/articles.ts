@@ -64,3 +64,37 @@ export async function getPublishedArticles(): Promise<Article[]> {
       left.data.slug.localeCompare(right.data.slug),
   );
 }
+
+export function getRelatedArticles(
+  article: Article,
+  articles: Article[],
+  limit = 3,
+): Article[] {
+  const articleTags = new Set(article.data.tags.map((tag) => tag.toLowerCase()));
+
+  return articles
+    .filter((candidate) => candidate.data.slug !== article.data.slug)
+    .map((candidate) => {
+      const sharedTags = candidate.data.tags.filter((tag) =>
+        articleTags.has(tag.toLowerCase()),
+      ).length;
+      const sharedCategory = candidate.data.category === article.data.category;
+      const sharedSeries =
+        Boolean(article.data.series) &&
+        candidate.data.series === article.data.series;
+
+      return {
+        article: candidate,
+        score: sharedTags * 2 + Number(sharedCategory) + Number(sharedSeries),
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        right.article.data.publicationDate.valueOf() -
+          left.article.data.publicationDate.valueOf() ||
+        left.article.data.slug.localeCompare(right.article.data.slug),
+    )
+    .slice(0, limit)
+    .map(({ article: related }) => related);
+}

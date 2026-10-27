@@ -1,0 +1,351 @@
+---
+interface Article {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  readingTime: number;
+  sample: boolean;
+  body: string;
+}
+
+interface Props {
+  basePath: string;
+  articles: Article[];
+}
+
+const { basePath, articles } = Astro.props;
+const base = basePath.endsWith('/') ? basePath : `${basePath}/`;
+const categories = [...new Set(articles.map((article) => article.category))].sort((a, b) => a.localeCompare(b));
+const tags = [...new Set(articles.flatMap((article) => article.tags))].sort((a, b) => a.localeCompare(b));
+const searchData = JSON.stringify(
+  articles.map(({ slug, title, description, category, tags, body }) => ({
+    slug,
+    title,
+    description,
+    category,
+    tags,
+    body,
+  })),
+).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+---
+
+<section class="article-search" aria-labelledby="article-search-heading" data-article-search>
+  <div class="search-heading">
+    <div>
+      <span class="search-eyebrow">The reading room</span>
+      <h2 id="article-search-heading">Find a reflection</h2>
+    </div>
+    <p>Follow a question, a subject, or a phrase that stays with you.</p>
+  </div>
+
+  <form class="search-controls" role="search" onsubmit="return false">
+    <div class="search-field">
+      <label for="article-query">Search the readings</label>
+      <input
+        id="article-query"
+        name="q"
+        type="search"
+        placeholder="Try “self-inquiry”"
+        autocomplete="off"
+        aria-controls="article-results"
+      />
+    </div>
+    <div class="search-filter">
+      <label for="article-category">Category</label>
+      <select id="article-category" name="category" aria-controls="article-results">
+        <option value="">All categories</option>
+        {categories.map((category) => <option value={category}>{category}</option>)}
+      </select>
+    </div>
+    <div class="search-filter">
+      <label for="article-tag">Tag</label>
+      <select id="article-tag" name="tag" aria-controls="article-results">
+        <option value="">All tags</option>
+        {tags.map((tag) => <option value={tag}>{tag}</option>)}
+      </select>
+    </div>
+    <button class="search-reset" type="reset" data-search-reset>Clear</button>
+  </form>
+
+  <div class="search-results-heading">
+    <p class="search-count" aria-live="polite" aria-atomic="true" data-search-count>
+      {articles.length} {articles.length === 1 ? 'reading' : 'readings'}
+    </p>
+    <p class="search-hint">Search includes each article’s full text.</p>
+  </div>
+
+  <ul class="search-results" id="article-results" data-search-results>
+    {articles.map((article) => (
+      <li class="search-result" data-article-slug={article.slug}>
+        <a class="search-result-link" href={`${base}essays/${article.slug}/`}>
+          <span class="result-meta">
+            <span>{article.category}</span>
+            <span>{article.readingTime} min read</span>
+            {article.sample && <span class="result-sample">Sample</span>}
+          </span>
+          <span class="result-title">{article.title}</span>
+          <span class="result-description">{article.description}</span>
+          {article.tags.length > 0 && (
+            <span class="result-tags" aria-label={`Topics: ${article.tags.join(', ')}`}>
+              {article.tags.map((tag) => <span class="result-tag">{tag}</span>)}
+            </span>
+          )}
+          <span class="result-arrow" aria-hidden="true">↗</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  <div class="search-empty" data-search-empty hidden>
+    <span class="empty-mark" aria-hidden="true">—</span>
+    <h3>No readings found</h3>
+    <p>Try another phrase or clear one of the filters to widen your search.</p>
+    <button class="empty-reset" type="button" data-empty-reset>Show all readings</button>
+  </div>
+
+  <script type="application/json" data-search-data set:html={searchData}></script>
+  <script>
+    const roots = document.querySelectorAll<HTMLElement>('[data-article-search]');
+
+    roots.forEach((root) => {
+      const dataElement = root.querySelector<HTMLScriptElement>('[data-search-data]');
+      const form = root.querySelector<HTMLFormElement>('.search-controls');
+      const queryInput = root.querySelector<HTMLInputElement>('#article-query');
+      const categorySelect = root.querySelector<HTMLSelectElement>('#article-category');
+      const tagSelect = root.querySelector<HTMLSelectElement>('#article-tag');
+      const count = root.querySelector<HTMLElement>('[data-search-count]');
+      const emptyState = root.querySelector<HTMLElement>('[data-search-empty]');
+      const resultList = root.querySelector<HTMLElement>('[data-search-results]');
+      const rows = [...root.querySelectorAll<HTMLElement>('[data-article-slug]')];
+
+      if (!dataElement || !form || !queryInput || !categorySelect || !tagSelect || !count || !emptyState || !resultList) return;
+
+      let searchable: Array<{
+        slug: string;
+        title: string;
+        description: string;
+        category: string;
+        tags: string[];
+        body: string;
+      }> = [];
+
+      try {
+        searchable = JSON.parse(dataElement.textContent || '[]');
+      } catch {
+        return;
+      }
+
+      const bySlug = new Map(searchable.map((article) => [article.slug, article]));
+      const updateResults = () => {
+        const queryTerms = queryInput.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+        const category = categorySelect.value;
+        const tag = tagSelect.value;
+        let visibleCount = 0;
+
+        rows.forEach((row) => {
+          const article = bySlug.get(row.dataset.articleSlug || '');
+          if (!article) return;
+
+          const searchableText = `${article.title} ${article.description} ${article.body}`.toLocaleLowerCase();
+          const matchesQuery = queryTerms.every((term) => searchableText.includes(term));
+          const matchesCategory = !category || article.category === category;
+          const matchesTag = !tag || article.tags.includes(tag);
+          const visible = matchesQuery && matchesCategory && matchesTag;
+
+          row.hidden = !visible;
+          if (visible) visibleCount += 1;
+        });
+
+        count.textContent = `${visibleCount} ${visibleCount === 1 ? 'reading' : 'readings'}`;
+        emptyState.hidden = visibleCount !== 0;
+        resultList.hidden = visibleCount === 0;
+      };
+
+      const clearFilters = () => {
+        queryInput.value = '';
+        categorySelect.value = '';
+        tagSelect.value = '';
+        updateResults();
+      };
+
+      queryInput.addEventListener('input', updateResults);
+      categorySelect.addEventListener('change', updateResults);
+      tagSelect.addEventListener('change', updateResults);
+      form.addEventListener('reset', () => requestAnimationFrame(updateResults));
+      root.querySelector('[data-empty-reset]')?.addEventListener('click', clearFilters);
+      queryInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && queryInput.value) {
+          queryInput.value = '';
+          updateResults();
+        }
+      });
+    });
+  </script>
+</section>
+
+<style>
+  .article-search {
+    --search-paper: var(--paper, #f6f2e9);
+    --search-deep: var(--paper-deep, #eee8dc);
+    --search-ink: var(--ink, #292a26);
+    --search-muted: var(--muted, #6e7068);
+    --search-line: var(--line, #dcd5c8);
+    --search-olive: var(--olive, #69715b);
+    --search-rust: var(--rust, #a5573d);
+    width: min(100%, 920px);
+    margin-inline: auto;
+    color: var(--search-ink);
+  }
+
+  .search-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 31px;
+  }
+
+  .search-eyebrow {
+    color: var(--search-olive);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+  }
+
+  .search-heading h2 {
+    margin: 8px 0 0;
+    font-family: var(--serif, Georgia, serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 400;
+    letter-spacing: -.045em;
+    line-height: 1.12;
+  }
+
+  .search-heading > p {
+    max-width: 310px;
+    margin: 0 0 4px;
+    color: var(--search-muted);
+    font-size: .88rem;
+    line-height: 1.65;
+  }
+
+  .search-controls {
+    display: grid;
+    grid-template-columns: minmax(230px, 1.6fr) minmax(145px, .9fr) minmax(145px, .9fr) auto;
+    align-items: end;
+    gap: 14px;
+    padding: 19px;
+    border: 1px solid var(--search-line);
+    background: var(--search-deep);
+  }
+
+  .search-field, .search-filter { display: grid; gap: 7px; min-width: 0; }
+  .search-field label, .search-filter label {
+    color: #595b52;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .search-controls input, .search-controls select {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #d2cbbb;
+    border-radius: 0;
+    background: var(--search-paper);
+    color: var(--search-ink);
+    font: 400 .87rem/1.4 var(--sans, sans-serif);
+  }
+
+  .search-controls input::placeholder { color: #8b8a7e; }
+  .search-controls select { cursor: pointer; }
+
+  .search-reset, .empty-reset {
+    min-height: 44px;
+    padding: 9px 13px;
+    border: 1px solid #b8b8a9;
+    background: transparent;
+    color: var(--search-olive);
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+  }
+
+  .search-reset:hover, .empty-reset:hover { background: var(--search-olive); color: var(--search-paper); }
+
+  .search-results-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 23px 0 13px;
+  }
+
+  .search-count {
+    margin: 0;
+    color: var(--search-olive);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .search-hint { margin: 0; color: var(--search-muted); font-size: .72rem; }
+  .search-results { margin: 0; padding: 0; border-top: 1px solid var(--search-line); list-style: none; }
+  .search-result { border-bottom: 1px solid var(--search-line); }
+  .search-result[hidden] { display: none; }
+
+  .search-result-link {
+    position: relative;
+    display: grid;
+    gap: 9px;
+    padding: 21px 46px 22px 1px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .search-result-link:hover .result-title { color: var(--search-rust); }
+  .search-result-link:hover .result-arrow { transform: translate(4px, -50%); }
+  .result-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 15px; color: var(--search-olive); font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .result-meta > span + span::before { margin-right: 15px; color: #aaa99d; content: '·'; }
+  .result-meta .result-sample { padding: 3px 6px; border: 1px solid #c8c5b8; color: #65705e; font-size: .56rem; letter-spacing: .08em; }
+  .result-meta .result-sample::before { content: none; }
+  .result-title { font-family: var(--serif, Georgia, serif); font-size: clamp(1.32rem, 2.4vw, 1.8rem); letter-spacing: -.03em; line-height: 1.2; transition: color .18s ease; }
+  .result-description { max-width: 700px; color: var(--search-muted); font-size: .84rem; line-height: 1.6; }
+  .result-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .result-tag { padding: 3px 7px; background: #eeebe2; color: #606456; font-size: .64rem; line-height: 1.4; }
+  .result-arrow { position: absolute; top: 50%; right: 4px; color: var(--search-rust); font-size: 1.2rem; transform: translateY(-50%); transition: transform .18s ease; }
+
+  .search-empty {
+    padding: 36px 24px 39px;
+    border: 1px solid var(--search-line);
+    background: #eeebe2;
+    text-align: center;
+  }
+
+  .search-empty[hidden] { display: none; }
+  .empty-mark { color: var(--search-rust); font-family: var(--serif, Georgia, serif); font-size: 2rem; line-height: 1; }
+  .search-empty h3 { margin: 10px 0 5px; font-family: var(--serif, Georgia, serif); font-size: 1.55rem; font-weight: 400; }
+  .search-empty p { max-width: 390px; margin: 0 auto 17px; color: var(--search-muted); font-size: .82rem; }
+
+  @media (max-width: 720px) {
+    .search-heading { display: block; margin-bottom: 22px; }
+    .search-heading > p { margin-top: 10px; }
+    .search-controls { grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+    .search-field { grid-column: 1 / -1; }
+    .search-reset { justify-self: start; }
+  }
+
+  @media (max-width: 430px) {
+    .search-controls { grid-template-columns: 1fr; }
+    .search-field { grid-column: auto; }
+    .search-results-heading { align-items: start; flex-direction: column; gap: 4px; }
+    .result-meta { gap: 6px 10px; }
+    .result-meta > span + span::before { margin-right: 10px; }
+  }
+</style>
