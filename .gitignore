@@ -53,3 +53,19 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Kilo / agent tooling
+.agents/
+.config/
+
+# Astro generated / build output
+.astro/
+dist/
+*.log
+.env
+.env.*
+pnpm-debug.log
+
+# Replit
+.cache/
+.local/
